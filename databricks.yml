@@ -113,7 +113,7 @@ targets:
 
                 custom_tags:
                   ResourceClass: SingleNode
-                  ambiente: prod
+                  secop_ambiente: prod
 
           tasks:
             - task_key: validar_ingesta

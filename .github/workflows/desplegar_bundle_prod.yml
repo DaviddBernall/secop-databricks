@@ -3,7 +3,7 @@ name: Desplegar bundle prod
 on:
   push:
     branches:
-      - feature/despliegue-prod
+      - "feature/**"
       - dev
       - main
     paths:
