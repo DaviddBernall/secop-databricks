@@ -1,0 +1,102 @@
+name: Desplegar bundle prod
+
+on:
+  push:
+    branches:
+      - feature/despliegue-prod
+      - dev
+      - main
+    paths:
+      - databricks.yml
+      - resources/**
+      - proceso/**
+      - .github/workflows/desplegar_bundle_prod.yml
+
+  workflow_dispatch:
+    inputs:
+      desplegar:
+        description: "Desplegar el job de produccion"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: secop-bundle-prod
+  cancel-in-progress: false
+
+jobs:
+  prod:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: prod
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Instalar CLI de Databricks
+        uses: databricks/setup-cli@main
+
+      - name: Verificar destino de produccion
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$DATABRICKS_HOST" = \
+            "https://adb-7405613701336192.12.azuredatabricks.net"
+          test "$DATABRICKS_CLIENT_ID" = \
+            "7d2a2f9c-15fe-4177-ab9d-9056c0cdee14"
+
+      - name: Comprobar autenticacion
+        run: databricks current-user me -t prod
+
+      - name: Comprobar acceso a la politica
+        run: databricks cluster-policies get 0006DD8F33B1D352 -t prod
+
+      - name: Validar bundle prod
+        run: databricks bundle validate -t prod
+
+      - name: Mostrar plan prod
+        run: databricks bundle plan -t prod
+
+      - name: Desplegar solamente desde main
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || inputs.desplegar)
+        run: |
+          databricks bundle deploy -t prod \
+            --auto-approve \
+            --fail-on-active-runs
+
+      - name: Consultar job desplegado
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || inputs.desplegar)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          databricks bundle summary -t prod --output json \
+            > bundle-summary.json
+
+          job_id=$(jq -er \
+            '.resources.jobs.secop_medallion.id' \
+            bundle-summary.json)
+
+          databricks jobs get "$job_id" -t prod --output json |
+          jq '{
+            job_id,
+            nombre: .settings.name,
+            run_as_actual: .run_as_user_name,
+            tareas: [.settings.tasks[].task_key]
+          }'

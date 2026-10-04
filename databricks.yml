@@ -1,6 +1,9 @@
 bundle:
   name: secop_medallion
 
+include:
+  - resources/*.yml
+
 variables:
   catalogo:
     description: Catalogo de Unity Catalog del ambiente
@@ -9,7 +12,20 @@ variables:
     description: Storage account del ambiente
 
   cluster_id:
-    description: ID del cluster existente para ejecutar el job
+    description: Cluster existente utilizado solamente en dev
+    default: ""
+
+  run_idartes:
+    description: Run de ingesta de contratos IDARTES
+    default: ""
+
+  run_idipron:
+    description: Run de ingesta de contratos IDIPRON
+    default: ""
+
+  run_procesos:
+    description: Run de ingesta de procesos
+    default: ""
 
 targets:
   dev:
@@ -23,6 +39,91 @@ targets:
       catalogo: project_dev
       storage_account: addb01
       cluster_id: 0925-173637-kqwf4mww
+      run_idartes: "95aa87aa-90ee-4104-8f38-d18edc3287b8"
+      run_idipron: "90a6911a-40da-486b-b7c4-9ac9ab37ecfa"
+      run_procesos: "6717455f-416d-4457-9a88-600732d976d6"
 
-include:
-  - resources/*.yml
+    resources:
+      jobs:
+        secop_medallion:
+          tasks:
+            - task_key: validar_ingesta
+              existing_cluster_id: ${var.cluster_id}
+
+            - task_key: raw_a_bronze
+              existing_cluster_id: ${var.cluster_id}
+
+            - task_key: bronze_a_silver
+              existing_cluster_id: ${var.cluster_id}
+
+            - task_key: silver_a_gold
+              existing_cluster_id: ${var.cluster_id}
+
+  prod:
+    mode: production
+
+    workspace:
+      host: https://adb-7405613701336192.12.azuredatabricks.net
+      root_path: "/Workspace/Users/lsb.davidbernal_gmail.com#ext#@lsbdavidbernalgmail.onmicrosoft.com/secop_bundle_prod"
+
+    variables:
+      catalogo: project_prod
+      storage_account: addbp01
+      run_idartes: "95aa87aa-90ee-4104-8f38-d18edc3287b8"
+      run_idipron: "90a6911a-40da-486b-b7c4-9ac9ab37ecfa"
+      run_procesos: "6717455f-416d-4457-9a88-600732d976d6"
+
+    run_as:
+      service_principal_name: "7635832d-6777-4976-a0f7-6506a6d74c5d"
+
+    permissions:
+      - user_name: lsb.davidbernal@gmail.com
+        level: CAN_MANAGE
+
+      - service_principal_name: "7d2a2f9c-15fe-4177-ab9d-9056c0cdee14"
+        level: CAN_MANAGE
+
+      - service_principal_name: "7635832d-6777-4976-a0f7-6506a6d74c5d"
+        level: CAN_VIEW
+        
+    resources:
+      jobs:
+        secop_medallion:
+          job_clusters:
+            - job_cluster_key: secop_compute_prod
+              new_cluster:
+                policy_id: "0006DD8F33B1D352"
+                apply_policy_default_values: true
+                spark_version: "16.4.x-scala2.12"
+                node_type_id: Standard_D4pds_v6
+                driver_node_type_id: Standard_D4pds_v6
+                num_workers: 0
+                data_security_mode: SINGLE_USER
+                single_user_name: "7635832d-6777-4976-a0f7-6506a6d74c5d"
+                runtime_engine: STANDARD
+                enable_elastic_disk: true
+
+                azure_attributes:
+                  availability: ON_DEMAND_AZURE
+                  first_on_demand: 1
+
+                spark_conf:
+                  spark.databricks.cluster.profile: singleNode
+                  spark.master: "local[*, 4]"
+
+                custom_tags:
+                  ResourceClass: SingleNode
+                  ambiente: prod
+
+          tasks:
+            - task_key: validar_ingesta
+              job_cluster_key: secop_compute_prod
+
+            - task_key: raw_a_bronze
+              job_cluster_key: secop_compute_prod
+
+            - task_key: bronze_a_silver
+              job_cluster_key: secop_compute_prod
+
+            - task_key: silver_a_gold
+              job_cluster_key: secop_compute_prod

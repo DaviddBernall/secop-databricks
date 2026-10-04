@@ -20,17 +20,16 @@ resources:
           default: "2024"
 
         - name: run_idartes
-          default: "95aa87aa-90ee-4104-8f38-d18edc3287b8"
+          default: ${var.run_idartes}
 
         - name: run_idipron
-          default: "90a6911a-40da-486b-b7c4-9ac9ab37ecfa"
+          default: ${var.run_idipron}
 
         - name: run_procesos
-          default: "6717455f-416d-4457-9a88-600732d976d6"
+          default: ${var.run_procesos}
 
       tasks:
         - task_key: validar_ingesta
-          existing_cluster_id: ${var.cluster_id}
           notebook_task:
             notebook_path: ../proceso/00_validar_ingesta_procesos.ipynb
           timeout_seconds: 3600
@@ -39,7 +38,6 @@ resources:
         - task_key: raw_a_bronze
           depends_on:
             - task_key: validar_ingesta
-          existing_cluster_id: ${var.cluster_id}
           notebook_task:
             notebook_path: ../proceso/01_raw_a_bronze.ipynb
           timeout_seconds: 3600
@@ -48,7 +46,6 @@ resources:
         - task_key: bronze_a_silver
           depends_on:
             - task_key: raw_a_bronze
-          existing_cluster_id: ${var.cluster_id}
           notebook_task:
             notebook_path: ../proceso/02_bronze_a_silver.ipynb
           timeout_seconds: 3600
@@ -57,7 +54,6 @@ resources:
         - task_key: silver_a_gold
           depends_on:
             - task_key: bronze_a_silver
-          existing_cluster_id: ${var.cluster_id}
           notebook_task:
             notebook_path: ../proceso/03_silver_a_gold.ipynb
           timeout_seconds: 3600
