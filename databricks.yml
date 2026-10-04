@@ -1,0 +1,28 @@
+bundle:
+  name: secop_medallion
+
+variables:
+  catalogo:
+    description: Catalogo de Unity Catalog del ambiente
+
+  storage_account:
+    description: Storage account del ambiente
+
+  cluster_id:
+    description: ID del cluster existente para ejecutar el job
+
+targets:
+  dev:
+    default: true
+
+    workspace:
+      host: https://adb-7405618812141483.3.azuredatabricks.net
+      root_path: /Workspace/Shared/.bundle/secop_medallion/dev
+
+    variables:
+      catalogo: project_dev
+      storage_account: addb01
+      cluster_id: 0925-173637-kqwf4mww
+
+include:
+  - resources/*.yml
