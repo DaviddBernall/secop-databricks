@@ -39,3 +39,17 @@ jobs:
 
       - name: Validar bundle de desarrollo
         run: databricks bundle validate -t dev
+
+      - name: Revisar job actual
+        run: |
+          databricks jobs get 257900437343850 --output json |
+          jq '{
+            job_id,
+            nombre: .settings.name,
+            run_as_actual: .run_as_user_name,
+            run_as_configurado: .settings.run_as,
+            tareas: [.settings.tasks[].task_key]
+          }'
+
+      - name: Revisar plan de despliegue
+        run: databricks bundle plan -t dev
