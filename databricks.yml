@@ -17,7 +17,7 @@ targets:
 
     workspace:
       host: https://adb-7405618812141483.3.azuredatabricks.net
-      root_path: /Workspace/Shared/.bundle/secop_medallion/dev
+      root_path: /Workspace/Users/lsb.davidbernal@gmail.com/secop_bundle_dev
 
     variables:
       catalogo: project_dev
