@@ -3,7 +3,9 @@ name: Validar bundle dev
 on:
   push:
     branches:
-      - feature/dev
+      - dev
+      - "feature/**"
+      
     paths:
       - databricks.yml
       - resources/**
