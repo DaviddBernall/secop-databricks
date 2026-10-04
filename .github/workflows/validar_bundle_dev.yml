@@ -39,7 +39,3 @@ jobs:
 
       - name: Validar bundle de desarrollo
         run: databricks bundle validate -t dev
-
-      - name: Vincular bundle al job existente
-        run: |
-          databricks bundle deployment bind secop_medallion 257900437343850 -t dev --auto-approve
