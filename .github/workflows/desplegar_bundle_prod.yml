@@ -58,10 +58,10 @@ jobs:
             "7d2a2f9c-15fe-4177-ab9d-9056c0cdee14"
 
       - name: Comprobar autenticacion
-        run: databricks current-user me
+        run: databricks current-user me -t prod
 
       - name: Comprobar acceso a la politica
-        run: databricks cluster-policies get 0006DD8F33B1D352
+        run: databricks cluster-policies get 0006DD8F33B1D352 -t prod
 
       - name: Validar bundle prod
         run: databricks bundle validate -t prod
@@ -93,7 +93,7 @@ jobs:
             '.resources.jobs.secop_medallion.id' \
             bundle-summary.json)
 
-          databricks jobs get "$job_id" --output json |
+          databricks jobs get "$job_id" -t prod --output json |
           jq '{
             job_id,
             nombre: .settings.name,
