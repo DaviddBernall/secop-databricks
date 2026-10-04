@@ -50,10 +50,6 @@ jobs:
             run_as_configurado: .settings.run_as,
             tareas: [.settings.tasks[].task_key]
           }'
-
-      - name: Vincular job en la nueva ruta del bundle
-        run: |
-          databricks bundle deployment bind secop_medallion 257900437343850 -t dev --auto-approve
-
+          
       - name: Revisar plan de despliegue
         run: databricks bundle plan -t dev
