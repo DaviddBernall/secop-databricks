@@ -1,0 +1,90 @@
+name: Desplegar bundle dev
+
+on:
+  push:
+    branches:
+      - dev
+      - "feature/**"
+    paths:
+      - .github/workflows/desplegar_bundle_dev.yml
+
+  workflow_dispatch:
+    inputs:
+      desplegar:
+        description: "Actualizar el job existente de desarrollo"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: secop-bundle-dev
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    # Los despliegues manuales solo se permiten desde dev.
+    if: github.event_name == 'push' || github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: dev
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+      EXPECTED_JOB_ID: "257900437343850"
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Instalar CLI de Databricks
+        uses: databricks/setup-cli@main
+
+      - name: Comprobar autenticacion
+        run: databricks current-user me
+
+      - name: Validar bundle
+        run: databricks bundle validate -t dev
+
+      - name: Comprobar vinculacion al job existente
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          databricks bundle summary -t dev --force-pull \
+            --output json > bundle-summary.json
+
+          jq -e --arg expected "$EXPECTED_JOB_ID" \
+            '(.resources.jobs.secop_medallion.id | tostring) == $expected' \
+            bundle-summary.json
+
+      - name: Mostrar plan de despliegue
+        run: databricks bundle plan -t dev
+
+      - name: Desplegar sin ejecutar el ETL
+        if: github.event_name == 'workflow_dispatch' && inputs.desplegar
+        run: |
+          databricks bundle deploy -t dev \
+            --auto-approve \
+            --fail-on-active-runs
+
+      - name: Consultar job despues del despliegue
+        if: github.event_name == 'workflow_dispatch' && inputs.desplegar
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          databricks jobs get "$EXPECTED_JOB_ID" --output json |
+          jq '{
+            job_id,
+            nombre: .settings.name,
+            run_as_actual: .run_as_user_name,
+            tareas: [.settings.tasks[].task_key]
+          }'
