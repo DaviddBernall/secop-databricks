@@ -1,0 +1,59 @@
+name: Probar autenticacion Databricks prod
+
+on:
+  push:
+    branches:
+      - feature/despliegue-prod
+    paths:
+      - .github/workflows/probar_auth_prod.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: prod
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+
+    steps:
+      - name: Instalar CLI de Databricks
+        uses: databricks/setup-cli@main
+
+      - name: Verificar destino e identidad
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "$DATABRICKS_HOST" = \
+            "https://adb-7405613701336192.12.azuredatabricks.net"
+
+          test "$DATABRICKS_CLIENT_ID" = \
+            "7d2a2f9c-15fe-4177-ab9d-9056c0cdee14"
+
+      - name: Comprobar autenticacion en prod
+        run: databricks current-user me
+
+      - name: Consultar runtime disponible en prod
+        shell: bash
+        run: |
+          set -euo pipefail
+          databricks clusters spark-versions --output json |
+          jq '[.versions[]
+            | select(.key | startswith("16.4."))
+            | {key, name}]'
+
+      - name: Consultar tipo de maquina en prod
+        shell: bash
+        run: |
+          set -euo pipefail
+          databricks clusters list-node-types --output json |
+          jq '[.node_types[]
+            | select(.node_type_id == "Standard_D4pds_v6")
+            | {node_type_id, memory_mb, num_cores}]'

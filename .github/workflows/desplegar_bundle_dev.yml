@@ -26,8 +26,8 @@ concurrency:
 
 jobs:
   desplegar:
-    # Validar y desplegar solamente cuando la rama seleccionada sea dev.
-    if: github.ref == 'refs/heads/dev'
+  if: github.ref == 'refs/heads/dev'
+  
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: dev
@@ -87,4 +87,4 @@ jobs:
             nombre: .settings.name,
             run_as_actual: .run_as_user_name,
             tareas: [.settings.tasks[].task_key]
-          }'
+}'

@@ -1,0 +1,57 @@
+name: Validar bundle dev
+
+on:
+  push:
+    branches:
+      - dev
+      - "feature/**"
+      
+    paths:
+      - databricks.yml
+      - resources/**
+      - proceso/**
+      - .github/workflows/validar_bundle_dev.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: dev
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+
+    steps:
+      - name: Descargar codigo del repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Instalar CLI de Databricks
+        uses: databricks/setup-cli@main
+
+      - name: Comprobar autenticacion
+        run: databricks current-user me
+
+      - name: Validar bundle de desarrollo
+        run: databricks bundle validate -t dev
+
+      - name: Revisar job actual
+        run: |
+          databricks jobs get 257900437343850 --output json |
+          jq '{
+            job_id,
+            nombre: .settings.name,
+            run_as_actual: .run_as_user_name,
+            run_as_configurado: .settings.run_as,
+            tareas: [.settings.tasks[].task_key]
+          }'
+          
+      - name: Revisar plan de despliegue
+        run: databricks bundle plan -t dev

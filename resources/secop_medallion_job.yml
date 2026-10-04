@@ -1,0 +1,60 @@
+resources:
+  jobs:
+    secop_medallion:
+      name: job_secop_medallion_${bundle.target}
+      description: Validacion Raw y ETL medallion SECOP II
+
+      max_concurrent_runs: 1
+
+      parameters:
+        - name: ambiente
+          default: ${bundle.target}
+
+        - name: catalogo
+          default: ${var.catalogo}
+
+        - name: storage_account
+          default: ${var.storage_account}
+
+        - name: anio
+          default: "2024"
+
+        - name: run_idartes
+          default: ${var.run_idartes}
+
+        - name: run_idipron
+          default: ${var.run_idipron}
+
+        - name: run_procesos
+          default: ${var.run_procesos}
+
+      tasks:
+        - task_key: validar_ingesta
+          notebook_task:
+            notebook_path: ../proceso/00_validar_ingesta_procesos.ipynb
+          timeout_seconds: 3600
+          max_retries: 0
+
+        - task_key: raw_a_bronze
+          depends_on:
+            - task_key: validar_ingesta
+          notebook_task:
+            notebook_path: ../proceso/01_raw_a_bronze.ipynb
+          timeout_seconds: 3600
+          max_retries: 0
+
+        - task_key: bronze_a_silver
+          depends_on:
+            - task_key: raw_a_bronze
+          notebook_task:
+            notebook_path: ../proceso/02_bronze_a_silver.ipynb
+          timeout_seconds: 3600
+          max_retries: 0
+
+        - task_key: silver_a_gold
+          depends_on:
+            - task_key: bronze_a_silver
+          notebook_task:
+            notebook_path: ../proceso/03_silver_a_gold.ipynb
+          timeout_seconds: 3600
+          max_retries: 0
