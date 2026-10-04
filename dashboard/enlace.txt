@@ -1,0 +1,12 @@
+DASHBOARD SECOP II — IDARTES / IDIPRON
+
+URL del dashboard publicado: PENDIENTE DE PEGAR EL ENLACE REAL.
+
+Ambiente del dashboard desarrollado: dev.
+Workspace de acceso: https://adb-7405618812141483.3.azuredatabricks.net/
+Fuentes: project_dev.gold (cuatro tablas KPI).
+
+El enlace al workspace no es el enlace específico del dashboard.
+Para completar este archivo: abrir el dashboard publicado, copiar su URL
+real desde el navegador o desde la opción de compartir y reemplazar
+la indicación PENDIENTE de arriba. El acceso puede requerir autenticación.
