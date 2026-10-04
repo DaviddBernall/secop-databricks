@@ -38,7 +38,6 @@ targets:
     variables:
       catalogo: project_dev
       storage_account: addb01
-      cluster_id: 0925-173637-kqwf4mww
       run_idartes: "95aa87aa-90ee-4104-8f38-d18edc3287b8"
       run_idipron: "90a6911a-40da-486b-b7c4-9ac9ab37ecfa"
       run_procesos: "6717455f-416d-4457-9a88-600732d976d6"
@@ -77,6 +76,12 @@ targets:
       - user_name: lsb.davidbernal@gmail.com
         level: CAN_MANAGE
 
+      - service_principal_name: "7d2a2f9c-15fe-4177-ab9d-9056c0cdee14"
+        level: CAN_MANAGE
+
+      - service_principal_name: "7635832d-6777-4976-a0f7-6506a6d74c5d"
+        level: CAN_VIEW
+        
     resources:
       jobs:
         secop_medallion:
