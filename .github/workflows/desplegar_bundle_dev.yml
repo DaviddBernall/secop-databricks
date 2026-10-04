@@ -26,8 +26,8 @@ concurrency:
 
 jobs:
   desplegar:
-    # Los despliegues manuales solo se permiten desde dev.
-    if: github.event_name == 'push' || github.ref == 'refs/heads/dev'
+    # Validar y desplegar solamente cuando la rama seleccionada sea dev.
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: dev
