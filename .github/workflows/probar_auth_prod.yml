@@ -39,3 +39,21 @@ jobs:
 
       - name: Comprobar autenticacion en prod
         run: databricks current-user me
+
+      - name: Consultar runtime disponible en prod
+        shell: bash
+        run: |
+          set -euo pipefail
+          databricks clusters spark-versions --output json |
+          jq '[.versions[]
+            | select(.key | startswith("16.4."))
+            | {key, name}]'
+
+      - name: Consultar tipo de maquina en prod
+        shell: bash
+        run: |
+          set -euo pipefail
+          databricks clusters list-node-types --output json |
+          jq '[.node_types[]
+            | select(.node_type_id == "Standard_D4pds_v6")
+            | {node_type_id, memory_mb, num_cores}]'
